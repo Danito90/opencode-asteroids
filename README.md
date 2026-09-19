@@ -35,6 +35,7 @@ Luego visita `http://localhost:3000`.
 | Power-up   | Efecto                              | Duración |
 | ---------- | ----------------------------------- | -------- |
 | ⚡ Velocidad | Duplica la aceleración de propulsión | 5 seg    |
+| 3 Triple shot | Dispara tres proyectiles paralelos | 5 seg    |
 
 Los power-ups aparecen aleatoriamente en el campo de juego. Tócalos con la nave para activarlos.
 
@@ -55,4 +56,5 @@ La **estrella fugaz** aparece en el 15% de las posiciones iniciales de asteroide
 - Asteroides se parten en fragmentos más pequeños al ser destruidos
 - Partículas de explosión al destruir asteroides
 - Power-up **Velocidad**: duplica el empuje de la nave durante 5 segundos al recogerlo
+- Power-up **Triple shot**: dispara tres proyectiles paralelos durante 5 segundos al recogerlo
 - Asteroide especial **Estrella fugaz**: enemigo rápido con duración limitada y estela visual
