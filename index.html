@@ -9,17 +9,79 @@
     body {
       background: #000;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 14px;
       height: 100vh;
+      padding: 16px;
+      color: #fff;
+      font-family: monospace;
     }
     canvas {
       display: block;
       border: 1px solid #222;
+      max-width: 100%;
+      height: auto;
+    }
+    .skin-picker {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+    .skin-picker-label { color: #777; }
+    .skin-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border: 1px solid #333;
+      background: #080808;
+      color: #aaa;
+      font: inherit;
+      cursor: pointer;
+    }
+    .skin-button:hover,
+    .skin-button:focus-visible {
+      border-color: #777;
+      color: #fff;
+      outline: none;
+    }
+    .skin-button.active {
+      border-color: var(--skin-color);
+      color: var(--skin-color);
+    }
+    .skin-swatch {
+      width: 10px;
+      height: 10px;
+      border: 1px solid currentColor;
+      background: var(--skin-color);
+      box-shadow: 0 0 6px var(--skin-color);
+    }
+    @media (max-width: 600px) {
+      body { justify-content: flex-start; padding-top: 12px; }
+      .skin-picker { gap: 6px; }
+      .skin-picker-label { width: 100%; text-align: center; }
     }
   </style>
 </head>
 <body>
+  <div class="skin-picker" aria-label="Seleccionar skin de la nave">
+    <span class="skin-picker-label">NAVE</span>
+    <button class="skin-button" type="button" data-skin="classic">
+      <span class="skin-swatch" aria-hidden="true"></span>CLASICA
+    </button>
+    <button class="skin-button" type="button" data-skin="plasma">
+      <span class="skin-swatch" aria-hidden="true"></span>PLASMA
+    </button>
+    <button class="skin-button" type="button" data-skin="solar">
+      <span class="skin-swatch" aria-hidden="true"></span>SOLAR
+    </button>
+  </div>
   <canvas id="canvas" width="800" height="600"></canvas>
   <script src="game.js"></script>
 </body>

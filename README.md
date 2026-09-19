@@ -30,6 +30,8 @@ Luego visita `http://localhost:3000`.
 | `↑`       | Propulsar  |
 | `Espacio` | Disparar   |
 
+La apariencia de la nave se cambia desde el selector sobre el canvas. Hay tres skins disponibles: **Clasica**, **Plasma** y **Solar**. La seleccion se guarda automaticamente en el navegador.
+
 ## Power-ups
 
 | Power-up   | Efecto                              | Duración |

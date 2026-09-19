@@ -5,6 +5,41 @@ const ctx = canvas.getContext('2d');
 const W = 800;
 const H = 600;
 
+// ── Skins ─────────────────────────────────────────────────────────────────────
+const SKINS = {
+  classic: { hull: '#ffffff', fill: 'rgba(255, 255, 255, 0.08)', thrust: '#ff8200' },
+  plasma: { hull: '#63f3ff', fill: 'rgba(0, 220, 255, 0.12)', thrust: '#d85cff' },
+  solar:  { hull: '#ffd166', fill: 'rgba(255, 166, 0, 0.12)', thrust: '#ff4d4d' },
+};
+const SKIN_STORAGE_KEY = 'asteroids-skin';
+let selectedSkin = loadSkin();
+
+function loadSkin() {
+  try {
+    const saved = localStorage.getItem(SKIN_STORAGE_KEY);
+    return SKINS[saved] ? saved : 'classic';
+  } catch {
+    return 'classic';
+  }
+}
+
+function selectSkin(id) {
+  if (!SKINS[id]) return;
+  selectedSkin = id;
+  try { localStorage.setItem(SKIN_STORAGE_KEY, id); } catch { /* almacenamiento opcional */ }
+  document.querySelectorAll('[data-skin]').forEach(button => {
+    const active = button.dataset.skin === selectedSkin;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', active);
+  });
+}
+
+document.querySelectorAll('[data-skin]').forEach(button => {
+  button.style.setProperty('--skin-color', SKINS[button.dataset.skin].hull);
+  button.addEventListener('click', () => selectSkin(button.dataset.skin));
+});
+selectSkin(selectedSkin);
+
 // ── Input ─────────────────────────────────────────────────────────────────────
 const keys = {};
 const justPressed = {};
@@ -293,7 +328,9 @@ class Ship {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.strokeStyle = '#fff';
+    const skin = SKINS[selectedSkin];
+    ctx.strokeStyle = skin.hull;
+    ctx.fillStyle   = skin.fill;
     ctx.lineWidth   = 1.5;
     ctx.lineJoin    = 'round';
 
@@ -304,6 +341,7 @@ class Ship {
     ctx.lineTo( -7,  0);   // muesca trasera
     ctx.lineTo(-12,  9);   // ala derecha
     ctx.closePath();
+    ctx.fill();
     ctx.stroke();
 
     // Llama del propulsor
@@ -312,7 +350,7 @@ class Ship {
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);
       ctx.lineTo(-8,  4);
-      ctx.strokeStyle = 'rgba(255, 130, 0, 0.85)';
+      ctx.strokeStyle = skin.thrust;
       ctx.stroke();
     }
 
@@ -524,7 +562,7 @@ function drawLifeIcon(x, y) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(-Math.PI / 2);
-  ctx.strokeStyle = '#fff';
+  ctx.strokeStyle = SKINS[selectedSkin].hull;
   ctx.lineWidth   = 1.2;
   ctx.lineJoin    = 'round';
   ctx.beginPath();
