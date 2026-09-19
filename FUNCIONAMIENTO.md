@@ -13,6 +13,7 @@ Este proyecto es un clon sencillo de **Asteroids** hecho con HTML5 Canvas y Java
 - Las colisiones se resuelven con distancia entre centros: bala-asteroide, nave-asteroide y nave-power-up.
 - La **estrella fugaz** aparece con una probabilidad del 15% al generar asteroides y vuelve a aparecer cada 8-14 segundos si no hay otra activa. Se mueve a 190-250 px/s, otorga 150 puntos, no se divide y desaparece tras 8 segundos.
 - Power-up **Velocidad** (⚡): aparece aleatoriamente; al recogerlo duplica la aceleración de propulsión 5 segundos, renovando el temporizador si se recoge otro.
+- Power-up **Escudo** (S): aparece aleatoriamente; al recogerlo protege la nave de colisiones con asteroides durante 5 segundos. El asteroide que impacta contra el escudo es destruido.
 - Para ejecutarlo basta abrir `index.html` o usar `npx serve .` y visitar `http://localhost:3000`.
 
 No hay tests, bundler ni framework: los cambios de jugabilidad se verifican manualmente en el navegador.

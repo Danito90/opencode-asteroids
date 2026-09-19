@@ -79,6 +79,48 @@ class SpeedPowerUp {
   }
 }
 
+// ── Power-Up: Escudo ──────────────────────────────────────────────────────────
+class ShieldPowerUp {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 14;
+    this.dead = false;
+    this.ttl = 15;
+    const angle = rand(0, Math.PI * 2);
+    const speed = 20;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+    this.pulse = 0;
+  }
+
+  update(dt) {
+    this.x = wrap(this.x + this.vx * dt, W);
+    this.y = wrap(this.y + this.vy * dt, H);
+    this.ttl -= dt;
+    this.pulse += dt * 6;
+    if (this.ttl <= 0) this.dead = true;
+  }
+
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    const alpha = 0.6 + 0.4 * Math.sin(this.pulse);
+    ctx.strokeStyle = `rgba(80, 150, 255, ${alpha})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = `rgba(80, 150, 255, ${alpha * 0.25})`;
+    ctx.fill();
+    ctx.font = 'bold 11px monospace';
+    ctx.fillStyle = `rgba(150, 200, 255, ${alpha})`;
+    ctx.textAlign = 'center';
+    ctx.fillText('S', 0, 4);
+    ctx.restore();
+  }
+}
+
 // ── Bullet ────────────────────────────────────────────────────────────────────
 class Bullet {
   constructor(x, y, angle) {
@@ -244,6 +286,7 @@ class Ship {
     this.shootCooldown = 0;
     this.dead          = false;
     this.speedBoost    = 0;
+    this.shield        = 0;
   }
 
   update(dt) {
@@ -251,6 +294,7 @@ class Ship {
     if (this.invincible    > 0) this.invincible    -= dt;
     if (this.shootCooldown > 0) this.shootCooldown -= dt;
     if (this.speedBoost    > 0) this.speedBoost    -= dt;
+    if (this.shield        > 0) this.shield        -= dt;
 
     const ROT   = 3.5;   // rad/s
     const THRUST = 260;  // px/s²
@@ -285,6 +329,10 @@ class Ship {
     this.speedBoost = 5;
   }
 
+  activateShield() {
+    this.shield = 5;
+  }
+
   draw() {
     if (this.dead) return;
     // Parpadeo durante invencibilidad de reaparición
@@ -293,6 +341,16 @@ class Ship {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
+
+    if (this.shield > 0) {
+      const pulse = 25 + Math.sin(this.shield * 8) * 2;
+      ctx.strokeStyle = 'rgba(80, 150, 255, 0.9)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, pulse, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
     ctx.strokeStyle = '#fff';
     ctx.lineWidth   = 1.5;
     ctx.lineJoin    = 'round';
@@ -401,7 +459,8 @@ function maybeSpawnPowerUp() {
       x = rand(0, W);
       y = rand(0, H);
     } while (ship && Math.hypot(x - ship.x, y - ship.y) < SAFE_DIST);
-    powerUps.push(new SpeedPowerUp(x, y));
+    const PowerUp = Math.random() < 0.5 ? SpeedPowerUp : ShieldPowerUp;
+    powerUps.push(new PowerUp(x, y));
   }
 }
 
@@ -483,7 +542,8 @@ function update(dt) {
   for (const p of powerUps) {
     if (!p.dead && dist(ship, p) < ship.radius + p.radius) {
       p.dead = true;
-      ship.activateSpeedBoost();
+      if (p instanceof ShieldPowerUp) ship.activateShield();
+      else ship.activateSpeedBoost();
     }
   }
 
@@ -509,11 +569,19 @@ function update(dt) {
   if (ship.invincible <= 0) {
     for (const a of asteroids) {
       if (dist(ship, a) < ship.radius + a.radius * 0.82) {
-        killShip();
+        if (ship.shield > 0) {
+          a.dead = true;
+          score += a.points ?? POINTS[a.size];
+          explode(a.x, a.y, a.size * 5);
+        } else {
+          killShip();
+        }
         break;
       }
     }
   }
+
+  asteroids = asteroids.filter(a => !a.dead);
 
   // Nivel completado
   if (asteroids.length === 0) nextLevel();
@@ -554,6 +622,12 @@ function drawHUD() {
     ctx.textAlign = 'right';
     ctx.fillStyle = '#0ff';
     ctx.fillText(`⚡ VELOCIDAD  ${ship.speedBoost.toFixed(1)}s`, W - 14, 50);
+  }
+
+  if (ship.shield > 0) {
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#5796ff';
+    ctx.fillText(`S ESCUDO  ${ship.shield.toFixed(1)}s`, W - 14, ship.speedBoost > 0 ? 70 : 50);
   }
 }
 
