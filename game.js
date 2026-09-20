@@ -7,12 +7,14 @@ const H = 600;
 
 // ── Skins ─────────────────────────────────────────────────────────────────────
 const SKINS = {
-  classic: { hull: '#ffffff', fill: 'rgba(255, 255, 255, 0.08)', thrust: '#ff8200' },
-  plasma: { hull: '#63f3ff', fill: 'rgba(0, 220, 255, 0.12)', thrust: '#d85cff' },
-  solar:  { hull: '#ffd166', fill: 'rgba(255, 166, 0, 0.12)', thrust: '#ff4d4d' },
+  classic: { hull: '#ffffff', fill: 'rgba(255, 255, 255, 0.08)', thrust: '#ff8200', scale: 1, scoreMultiplier: 1 },
+  plasma: { hull: '#63f3ff', fill: 'rgba(0, 220, 255, 0.12)', thrust: '#d85cff', scale: 1, scoreMultiplier: 1 },
+  solar:  { hull: '#ffd166', fill: 'rgba(255, 166, 0, 0.12)', thrust: '#ff4d4d', scale: 1, scoreMultiplier: 1 },
+  purple: { hull: '#c05cff', fill: 'rgba(160, 60, 255, 0.14)', thrust: '#ff8cff', scale: 2, scoreMultiplier: 2 },
 };
 const SKIN_STORAGE_KEY = 'asteroids-skin';
 let selectedSkin = loadSkin();
+let ship = null;
 
 function loadSkin() {
   try {
@@ -26,6 +28,7 @@ function loadSkin() {
 function selectSkin(id) {
   if (!SKINS[id]) return;
   selectedSkin = id;
+  if (ship) ship.radius = 12 * SKINS[selectedSkin].scale;
   try { localStorage.setItem(SKIN_STORAGE_KEY, id); } catch { /* almacenamiento opcional */ }
   document.querySelectorAll('[data-skin]').forEach(button => {
     const active = button.dataset.skin === selectedSkin;
@@ -365,7 +368,7 @@ class Ship {
     this.angle  = -Math.PI / 2;
     this.vx     = 0;
     this.vy     = 0;
-    this.radius = 12;
+    this.radius = 12 * SKINS[selectedSkin].scale;
     this.thrusting     = false;
     this.invincible    = 3;
     this.shootCooldown = 0;
@@ -406,12 +409,12 @@ class Ship {
   tryShoot() {
     if (this.shootCooldown > 0 || this.dead) return [];
     this.shootCooldown = 0.2;
-    const NOSE = 21;
+    const NOSE = 21 * SKINS[selectedSkin].scale;
     const ox = this.x + Math.cos(this.angle) * NOSE;
     const oy = this.y + Math.sin(this.angle) * NOSE;
     if (this.tripleShot <= 0) return [new Bullet(ox, oy, this.angle)];
 
-    const SIDE = 7;
+    const SIDE = 7 * SKINS[selectedSkin].scale;
     const sideX = -Math.sin(this.angle) * SIDE;
     const sideY = Math.cos(this.angle) * SIDE;
     return [
@@ -442,6 +445,9 @@ class Ship {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
 
+    const skin = SKINS[selectedSkin];
+    ctx.scale(skin.scale, skin.scale);
+
     if (this.shield > 0) {
       const pulse = 25 + Math.sin(this.shield * 8) * 2;
       ctx.strokeStyle = 'rgba(80, 150, 255, 0.9)';
@@ -451,7 +457,6 @@ class Ship {
       ctx.stroke();
     }
 
-    const skin = SKINS[selectedSkin];
     ctx.strokeStyle = skin.hull;
     ctx.fillStyle   = skin.fill;
     ctx.lineWidth   = 1.5;
@@ -514,7 +519,7 @@ class Particle {
 }
 
 // ── Estado del juego ──────────────────────────────────────────────────────────
-let ship, bullets, asteroids, particles, powerUps;
+let bullets, asteroids, particles, powerUps;
 let score, lives, level;
 let state;      // 'playing' | 'dead' | 'gameover'
 let deadTimer;
@@ -607,6 +612,11 @@ function killShip() {
   }
 }
 
+function pointsFor(asteroid) {
+  const basePoints = asteroid.points ?? POINTS[asteroid.size];
+  return basePoints * SKINS[selectedSkin].scoreMultiplier;
+}
+
 // ── Update ────────────────────────────────────────────────────────────────────
 function update(dt) {
   if (state === 'gameover') {
@@ -660,7 +670,7 @@ function update(dt) {
       if (!a.dead && !b.dead && dist(b, a) < a.radius) {
         b.dead = true;
         a.dead = true;
-        score += a.points ?? POINTS[a.size];
+        score += pointsFor(a);
         explode(a.x, a.y, a.size * 5);
         newAsteroids.push(...a.split());
       }
@@ -675,7 +685,7 @@ function update(dt) {
       if (dist(ship, a) < ship.radius + a.radius * 0.82) {
         if (ship.shield > 0) {
           a.dead = true;
-          score += a.points ?? POINTS[a.size];
+          score += pointsFor(a);
           explode(a.x, a.y, a.size * 5);
         } else {
           killShip();
