@@ -1,0 +1,108 @@
+name: Format new issues
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add labels and review context
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const text = `${issue.title}\n${issue.body || ''}`.toLowerCase();
+            const labels = new Set(['needs-triage']);
+
+            const rules = [
+              { label: 'bug', terms: ['bug', 'error', 'crash', 'broken', 'falla', 'error'] },
+              { label: 'enhancement', terms: ['feature', 'enhancement', 'improvement', 'mejora', 'funcionalidad'] },
+              { label: 'documentation', terms: ['documentation', 'docs', 'documentacion', 'readme'] },
+              { label: 'question', terms: ['question', 'help', 'pregunta', 'ayuda', 'como '] },
+            ];
+
+            for (const rule of rules) {
+              if (rule.terms.some((term) => text.includes(term))) {
+                labels.add(rule.label);
+              }
+            }
+
+            const labelConfig = {
+              'needs-triage': { color: 'D4C5F9', description: 'Issue pending review' },
+              bug: { color: 'D73A4A', description: 'Something is not working' },
+              enhancement: { color: 'A2EEEF', description: 'New feature or improvement' },
+              documentation: { color: '0075CA', description: 'Documentation changes' },
+              question: { color: 'D876E3', description: 'More information is needed' },
+            };
+
+            for (const name of labels) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                });
+              } catch (error) {
+                if (error.status !== 404) throw error;
+
+                const config = labelConfig[name];
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                  color: config.color,
+                  description: config.description,
+                });
+              }
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: [...labels],
+            });
+
+            const startMarker = '<!-- issue-format:start -->';
+            const endMarker = '<!-- issue-format:end -->';
+            const currentBody = issue.body || '';
+
+            if (currentBody.includes(startMarker)) {
+              core.info('Issue already contains the generated context block.');
+              return;
+            }
+
+            const createdAt = new Date(issue.created_at).toISOString();
+            const generatedContext = [
+              '',
+              startMarker,
+              '## Review context',
+              '',
+              '| Field | Value |',
+              '| --- | --- |',
+              `| Author | @${issue.user.login} |`,
+              `| Created | ${createdAt} |`,
+              `| Repository | ${context.repo.owner}/${context.repo.repo} |`,
+              `| Issue | [#${issue.number}](${issue.html_url}) |`,
+              '',
+              '### Triage checklist',
+              '',
+              '- [ ] Reproduce or validate the report',
+              '- [ ] Confirm scope and priority',
+              '- [ ] Assign an owner',
+              '',
+              endMarker,
+            ].join('\n');
+
+            const originalBody = currentBody || '_No description was provided._';
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: `${originalBody}${generatedContext}`,
+            });
