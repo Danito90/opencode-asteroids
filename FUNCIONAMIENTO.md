@@ -2,7 +2,7 @@
 
 Este proyecto es un clon sencillo de **Asteroids** hecho con HTML5 Canvas y JavaScript puro, sin dependencias ni compilacion.
 
-- `index.html` define la pagina y un canvas fijo de `800x600`; carga `game.js` directamente.
+- `index.html` define la pagina y un canvas fijo de `1600x1200`; carga `game.js` directamente.
 - `game.js` contiene toda la aplicacion: entrada de teclado, entidades, estado, fisicas, colisiones, renderizado y el loop de animacion.
 - El juego se actualiza mediante `requestAnimationFrame`. Cada frame calcula `dt`, actualiza el estado y dibuja la escena.
 - La nave rota con flechas, acelera con `ArrowUp` y dispara con `Espacio`.
